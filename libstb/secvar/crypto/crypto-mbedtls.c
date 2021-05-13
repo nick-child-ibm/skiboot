@@ -14,7 +14,9 @@
 #include <mbedtls/md_internal.h>
 #include <mbedtls/oid.h>
 #include "libstb/crypto/pkcs7/pkcs7.h"
+#ifdef SECVAR_CRYPTO_WRITE_FUNC
 #include "libstb/crypto/pkcs7/pkcs7_write.h"
+#endif
 #include <mbedtls/platform.h>
 
 crypto_pkcs7 *crypto_pkcs7_parse_der(const unsigned char *buf, const int buflen)
@@ -73,6 +75,7 @@ int crypto_pkcs7_signed_hash_verify(crypto_pkcs7 *pkcs7, crypto_x509 *x509,
 	return mbedtls_pkcs7_signed_hash_verify(pkcs7, x509, hash, hash_len);
 }
 
+#ifdef SECVAR_CRYPTO_WRITE_FUNC
 int crypto_pkcs7_generate_w_signature(unsigned char **pkcs7, size_t *pkcs7Size,
 				      const unsigned char *newData,
 				      size_t newDataSize, const char **crtFiles,
@@ -217,6 +220,12 @@ out:
 	return rc;
 }
 
+int crypto_convert_pem_to_der(const unsigned char *input, size_t ilen,
+			      unsigned char **output, size_t *olen)
+{
+	return mbedtls_convert_pem_to_der(input, ilen, output, olen);
+}
+#endif
 int crypto_x509_get_der_len(crypto_x509 *x509)
 {
 	return x509->raw.len;
@@ -304,12 +313,6 @@ void crypto_x509_free(crypto_x509 *x509)
 {
 	mbedtls_x509_crt_free(x509);
 	free(x509);
-}
-
-int crypto_convert_pem_to_der(const unsigned char *input, size_t ilen,
-			      unsigned char **output, size_t *olen)
-{
-	return mbedtls_convert_pem_to_der(input, ilen, output, olen);
 }
 
 void crypto_strerror(int rc, char *out_str, size_t out_max_len)
