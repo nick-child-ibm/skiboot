@@ -6,12 +6,13 @@
 #include <string.h>
 #include <stdlib.h> // for exit
 #include "crypto.h"
-#include "include/prlog.h"
-#include "include/err.h"
+#include <skiboot.h> // for prlog
+#include "secvar_crypto_err.h" // for err codes
 
 #include <mbedtls/pk_internal.h> // for validating cert pk data
 #include <mbedtls/error.h>
 #include <mbedtls/md_internal.h>
+#include <mbedtls/oid.h>
 #include "libstb/crypto/pkcs7/pkcs7.h"
 #include "libstb/crypto/pkcs7/pkcs7_write.h"
 #include <mbedtls/platform.h>

@@ -6,8 +6,8 @@
 #include <string.h>
 #include <stdlib.h> // for exit
 #include "crypto.h"
-#include "include/prlog.h"
-#include "include/err.h"
+#include <skiboot.h> // for prlog
+#include "secvar_crypto_err.h" // for err codes
 
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
