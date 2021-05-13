@@ -204,6 +204,8 @@ out:
 	return PKCS7_FAIL;
 }
 
+#ifdef SECVAR_CRYPTO_WRITE_FUNC
+
 int crypto_pkcs7_generate_w_signature(unsigned char **pkcs7, size_t *pkcs7Size,
 				      const unsigned char *newData,
 				      size_t newDataSize, const char **crtFiles,
@@ -401,6 +403,25 @@ int crypto_pkcs7_generate_w_already_signed_data(
 	return PKCS7_FAIL;
 }
 
+int crypto_convert_pem_to_der(const unsigned char *input, size_t ilen,
+			      unsigned char **output, size_t *olen)
+{
+	int rc;
+	BIO *bio;
+	bio = BIO_new_mem_buf(input, ilen);
+	//these variables are not needed on return, just needed to properly call the function
+	char *header = NULL, *name = NULL;
+	//returns 0 for fail and 1 on success
+	rc = !PEM_read_bio(bio, &name, &header, output, (long int *)olen);
+	if (header)
+		free(header);
+	if (name)
+		free(name);
+	BIO_free(bio);
+	return rc;
+}
+#endif
+
 int crypto_x509_get_der_len(crypto_x509 *x509)
 {
 	return i2d_X509(x509, NULL);
@@ -553,24 +574,6 @@ crypto_x509 *crypto_x509_parse_der(const unsigned char *data, size_t data_len)
 void crypto_x509_free(crypto_x509 *x509)
 {
 	X509_free(x509);
-}
-
-int crypto_convert_pem_to_der(const unsigned char *input, size_t ilen,
-			      unsigned char **output, size_t *olen)
-{
-	int rc;
-	BIO *bio;
-	bio = BIO_new_mem_buf(input, ilen);
-	//these variables are not needed on return, just needed to properly call the function
-	char *header = NULL, *name = NULL;
-	//returns 0 for fail and 1 on success
-	rc = !PEM_read_bio(bio, &name, &header, output, (long int *)olen);
-	if (header)
-		free(header);
-	if (name)
-		free(name);
-	BIO_free(bio);
-	return rc;
 }
 
 void crypto_strerror(int rc, char *out_str, size_t out_max_len)
