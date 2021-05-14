@@ -534,7 +534,7 @@ void crypto_x509_get_short_info(crypto_x509 *x509, char *short_desc,
 	OBJ_obj2txt(short_desc, max_len, alg->algorithm, 0);
 }
 
-int crypto_x509_get_long_desc(char *x509_info, size_t max_len, char *delim,
+int crypto_x509_get_long_desc(char *x509_info, size_t max_len, const char *delim,
 			      crypto_x509 *x509)
 {
 	int rc;

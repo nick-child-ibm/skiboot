@@ -284,7 +284,7 @@ void crypto_x509_get_short_info(crypto_x509 *x509, char *short_desc,
 				  x509->sig_pk, x509->sig_md, x509->sig_opts);
 }
 
-int crypto_x509_get_long_desc(char *x509_info, size_t max_len, char *delim,
+int crypto_x509_get_long_desc(char *x509_info, size_t max_len, const char *delim,
 			      crypto_x509 *x509)
 {
 	return mbedtls_x509_crt_info(x509_info, max_len, delim, x509);
