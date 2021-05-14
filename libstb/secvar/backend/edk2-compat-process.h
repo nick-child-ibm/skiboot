@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <ccan/endian/endian.h>
-#include <mbedtls/error.h>
 #include <device.h>
 #include "libstb/crypto/pkcs7/pkcs7.h"
 #include "edk2.h"
@@ -23,7 +22,7 @@
 #include "../secvar_devtree.h"
 
 #define CERT_BUFFER_SIZE        2048
-#define MBEDTLS_ERR_BUFFER_SIZE 1024
+#define CRYPTO_ERR_BUFFER_SIZE 1024
 
 #define EDK2_MAX_KEY_LEN        SECVAR_MAX_KEY_LEN
 #define key_equals(a,b) (!strncmp(a, b, EDK2_MAX_KEY_LEN))

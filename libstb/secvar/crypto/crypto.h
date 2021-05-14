@@ -165,7 +165,7 @@ void crypto_x509_get_short_info(crypto_x509 *x509, char *short_desc,
  *@param x509 ,  a pointer to either an openssl or mbedtls x509 struct
  *@return number of bytes written to x509_info
  */
-int crypto_x509_get_long_desc(char *x509_info, size_t max_len, char *delim,
+int crypto_x509_get_long_desc(char *x509_info, size_t max_len, const char *delim,
 			      crypto_x509 *x509);
 
 /*

@@ -10,11 +10,10 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <ccan/endian/endian.h>
-#include <mbedtls/error.h>
-#include <mbedtls/oid.h>
 #include <device.h>
 #include <assert.h>
 #include "libstb/crypto/pkcs7/pkcs7.h"
+#include "libstb/secvar/crypto/crypto.h"
 #include "edk2.h"
 #include "../secvar.h"
 #include "edk2-compat-process.h"
@@ -214,23 +213,21 @@ int get_auth_descriptor2(const void *buf, const size_t buflen, void **auth_buffe
 
 static bool validate_cert(char *signing_cert, int signing_cert_size)
 {
-	mbedtls_x509_crt x509;
+	crypto_x509 *x509;
 	char *x509_buf = NULL;
 	int rc;
 
-	mbedtls_x509_crt_init(&x509);
-	rc = mbedtls_x509_crt_parse(&x509, signing_cert, signing_cert_size);
-
+	x509 = crypto_x509_parse_der((unsigned char *)signing_cert, signing_cert_size);
 	/* If failure in parsing the certificate, exit */
-	if(rc) {
-		prlog(PR_ERR, "X509 certificate parsing failed %04x\n", rc);
+	if (!x509) {
+		prlog(PR_ERR, "X509 certificate parsing failed\n");
 		return false;
 	}
 
 	x509_buf = zalloc(CERT_BUFFER_SIZE);
-	rc = mbedtls_x509_crt_info(x509_buf, CERT_BUFFER_SIZE, "CRT:", &x509);
+	rc = crypto_x509_get_long_desc(x509_buf, CERT_BUFFER_SIZE, "CRT:", x509);
 
-	mbedtls_x509_crt_free(&x509);
+	crypto_x509_free(x509);
 	free(x509_buf);
 	x509_buf = NULL;
 
@@ -424,32 +421,26 @@ int check_timestamp(const char *key, const struct efi_time *timestamp,
 }
 
 /* Extract PKCS7 from the authentication header */
-static mbedtls_pkcs7* get_pkcs7(const struct efi_variable_authentication_2 *auth)
+static crypto_pkcs7* get_pkcs7(const struct efi_variable_authentication_2 *auth)
 {
 	char *checkpkcs7cert = NULL;
 	size_t len;
-	mbedtls_pkcs7 *pkcs7 = NULL;
+	crypto_pkcs7 *pkcs7 = NULL;
 	int rc;
 
 	len = get_pkcs7_len(auth);
-
-	pkcs7 = malloc(sizeof(struct mbedtls_pkcs7));
-	if (!pkcs7)
-		return NULL;
-
-	mbedtls_pkcs7_init(pkcs7);
-	rc = mbedtls_pkcs7_parse_der( auth->auth_info.cert_data, len, pkcs7);
-	if (rc <= 0) {
-		prlog(PR_ERR, "Parsing pkcs7 failed %04x\n", rc);
+	pkcs7 = crypto_pkcs7_parse_der(auth->auth_info.cert_data, len);
+	if (!pkcs7) {
+		prlog(PR_ERR, "Parsing pkcs7 failed\n");
 		goto out;
 	}
 
 	checkpkcs7cert = zalloc(CERT_BUFFER_SIZE);
 	if (!checkpkcs7cert)
 		goto out;
-
-	rc = mbedtls_x509_crt_info(checkpkcs7cert, CERT_BUFFER_SIZE, "CRT:",
-				   &(pkcs7->signed_data.certs));
+	
+	rc = crypto_x509_get_long_desc(checkpkcs7cert, CERT_BUFFER_SIZE, "CRT:",
+				  crypto_pkcs7_get_signing_cert(pkcs7, 0));
 	if (rc < 0) {
 		prlog(PR_ERR, "Failed to parse the certificate in PKCS7 structure\n");
 		free(checkpkcs7cert);
@@ -461,9 +452,11 @@ static mbedtls_pkcs7* get_pkcs7(const struct efi_variable_authentication_2 *auth
 	return pkcs7;
 
 out:
-	mbedtls_pkcs7_free(pkcs7);
-	free(pkcs7);
+	
+	if (pkcs7) 
+		crypto_pkcs7_free(pkcs7);
 	pkcs7 = NULL;
+
 	return pkcs7;
 }
 
@@ -472,9 +465,8 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 			    const char *hash, const size_t hash_len,
 			    const struct secvar *avar)
 {
-	mbedtls_pkcs7 *pkcs7 = NULL;
-	mbedtls_x509_crt x509;
-	mbedtls_md_type_t md_alg;
+	crypto_pkcs7 *pkcs7 = NULL;
+	crypto_x509 *x509 = NULL;
 	char *signing_cert = NULL;
 	char *x509_buf = NULL;
 	int signing_cert_size;
@@ -497,17 +489,9 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 	 * We only support sha256, which has a hash length of 32.
 	 * If the alg is not sha256, then we should bail now.
 	 */
-	rc = mbedtls_oid_get_md_alg(&pkcs7->signed_data.digest_alg_identifiers,
-				    &md_alg);
-	if (rc != 0) {
-		prlog(PR_ERR, "Failed to get the Digest Algorithm Identifier: %d\n", rc);
-		rc = OPAL_PARAMETER;
-		goto err_pkcs7;
-	}
-
-	if (md_alg != MBEDTLS_MD_SHA256) {
-		prlog(PR_ERR, "Unexpected digest algorithm: expected %d (SHA-256), got %d\n",
-		      MBEDTLS_MD_SHA256, md_alg);
+	rc = crypto_pkcs7_md_is_sha256(pkcs7);
+	if (rc) {
+		prlog(PR_ERR, "PKCS7 digest algorithm not SHA256\n");
 		rc = OPAL_PARAMETER;
 		goto err_pkcs7;
 	}
@@ -542,23 +526,19 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 			break;
 		}
 
-		mbedtls_x509_crt_init(&x509);
-		rc = mbedtls_x509_crt_parse(&x509,
-					    signing_cert,
-					    signing_cert_size);
-
+		x509 = crypto_x509_parse_der((unsigned char *)signing_cert, signing_cert_size);
 		/* This should not happen, unless something corrupted in PNOR */
-		if(rc) {
-			prlog(PR_ERR, "X509 certificate parsing failed %04x\n", rc);
+		if (!x509) {
+			prlog(PR_ERR, "X509 certificate parsing failed\n");
 			rc = OPAL_INTERNAL_ERROR;
 			break;
 		}
 
 		x509_buf = zalloc(CERT_BUFFER_SIZE);
-		rc = mbedtls_x509_crt_info(x509_buf,
+		rc = crypto_x509_get_long_desc(x509_buf,
 					   CERT_BUFFER_SIZE,
 					   "CRT:",
-					   &x509);
+					   x509);
 
 		/* This should not happen, unless something corrupted in PNOR */
 		if (rc < 0) {
@@ -571,16 +551,17 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 		free(x509_buf);
 		x509_buf = NULL;
 
-		rc = mbedtls_pkcs7_signed_hash_verify(pkcs7, &x509, hash, hash_len);
+		rc = crypto_pkcs7_signed_hash_verify(pkcs7, x509, (unsigned char *) hash,
+			       			   hash_len);
 
 		/* If you find a signing certificate, you are done */
 		if (rc == 0) {
 			prlog(PR_INFO, "Signature Verification passed\n");
-			mbedtls_x509_crt_free(&x509);
+			crypto_x509_free(x509);
 			break;
 		} else {
-			errbuf = zalloc(MBEDTLS_ERR_BUFFER_SIZE);
-			mbedtls_strerror(rc, errbuf, MBEDTLS_ERR_BUFFER_SIZE);
+			errbuf = zalloc(CRYPTO_ERR_BUFFER_SIZE);
+			crypto_strerror(rc, errbuf, CRYPTO_ERR_BUFFER_SIZE);
 			prlog(PR_ERR, "Signature Verification failed %02x %s\n",
 					rc, errbuf);
 			free(errbuf);
@@ -591,7 +572,7 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 		/* Look for the next ESL */
 		offset = offset + eslsize;
 		eslvarsize = eslvarsize - eslsize;
-		mbedtls_x509_crt_free(&x509);
+		crypto_x509_free(x509);
 		free(signing_cert);
 		/* Since we are going to allocate again in the next iteration */
 		signing_cert = NULL;
@@ -600,8 +581,7 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 
 	free(signing_cert);
 err_pkcs7:
-	mbedtls_pkcs7_free(pkcs7);
-	free(pkcs7);
+	crypto_pkcs7_free(pkcs7);
 
 	return rc;
 }
@@ -621,18 +601,10 @@ static char *get_hash_to_verify(const char *key, const char *new_data,
 	char *wkey;
 	uuid_t guid;
 	unsigned char *hash = NULL;
-	const mbedtls_md_info_t *md_info;
-	mbedtls_md_context_t ctx;
+	crypto_md_ctx *ctx;
 	int rc;
 
-	md_info = mbedtls_md_info_from_type( MBEDTLS_MD_SHA256 );
-	mbedtls_md_init(&ctx);
-
-	rc = mbedtls_md_setup(&ctx, md_info, 0);
-	if (rc)
-		goto out;
-
-	rc = mbedtls_md_starts(&ctx);
+	rc = crypto_md_ctx_init(&ctx, CRYPTO_MD_SHA256);
 	if (rc)
 		goto out;
 
@@ -648,39 +620,39 @@ static char *get_hash_to_verify(const char *key, const char *new_data,
 	/* Expand char name to wide character width */
 	varlen = strlen(key) * 2;
 	wkey = char_to_wchar(key, strlen(key));
-	rc = mbedtls_md_update(&ctx, wkey, varlen);
+	rc = crypto_md_update(ctx, wkey, varlen);
 	free(wkey);
 	if (rc) 
 		goto out;
 
-	rc = mbedtls_md_update(&ctx, (const unsigned char *)&guid, sizeof(guid));
+	rc = crypto_md_update(ctx, (const unsigned char *)&guid, sizeof(guid));
 	if (rc)
 		goto out;
 
-	rc = mbedtls_md_update(&ctx, (const unsigned char *)&attr, sizeof(attr));
+	rc = crypto_md_update(ctx, (const unsigned char *)&attr, sizeof(attr));
 	if (rc)
 		goto out;
 
-	rc = mbedtls_md_update(&ctx, (const unsigned char *)timestamp,
+	rc = crypto_md_update(ctx, (const unsigned char *)timestamp,
 			       sizeof(struct efi_time));
 	if (rc)
 		goto out;
 
-	rc = mbedtls_md_update(&ctx, new_data, new_data_size);
+	rc = crypto_md_update(ctx, new_data, new_data_size);
 	if (rc)
 		goto out;
 
 	hash = zalloc(32);
 	if (!hash)
 		return NULL;
-	rc = mbedtls_md_finish(&ctx, hash);
+	rc = crypto_md_finish(ctx, hash);
 	if (rc) {
 		free(hash);
 		hash = NULL;
 	}
 
 out:
-	mbedtls_md_free(&ctx);
+	crypto_md_free(ctx);
 	return hash;
 }
 
