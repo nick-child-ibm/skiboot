@@ -7,6 +7,7 @@
 #include "../backend/edk2-compat-process.c"
 #include "../secvar_util.c"
 #include "../../crypto/pkcs7/pkcs7.c"
+#include "../crypto/crypto-mbedtls.c"
 #include "./data/PK.h"
 #include "./data/noPK.h"
 #include "./data/KEK.h"

@@ -10,7 +10,7 @@ ifeq ($(SECVAR_CRYPTO_OPENSSL),1)
     $(error Found SECVAR_CRYPTO_OPENSSL=1, Skiboot cannot be built with OpenSSL)
 else
 	SECVAR_CRYPTO_OBJS = crypto-mbedtls.o
-        CFLAGS += -DSECVAR_CRYPTO_MBEDTLS
+	CFLAGS += -DSECVAR_CRYPTO_MBEDTLS
 
 endif
 
