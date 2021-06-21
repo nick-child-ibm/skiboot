@@ -13,6 +13,7 @@
 #include <mbedtls/error.h>
 #include <mbedtls/oid.h>
 #include <device.h>
+#include "skiboot.h"
 #include <assert.h>
 #include "libstb/crypto/pkcs7/pkcs7.h"
 #include "edk2.h"
@@ -20,6 +21,8 @@
 #include "edk2-compat-process.h"
 
 bool setup_mode;
+
+
 
 int update_variable_in_bank(struct secvar *update_var, const char *data,
 			    const uint64_t dsize, struct list_head *bank)

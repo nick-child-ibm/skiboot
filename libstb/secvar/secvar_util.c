@@ -9,6 +9,7 @@
 #include <string.h>
 #include <skiboot.h>
 #include <opal.h>
+#include "ccan/short_types/short_types.h"
 #include "secvar.h"
 
 void clear_bank_list(struct list_head *bank)

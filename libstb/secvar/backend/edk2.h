@@ -44,7 +44,7 @@
 
 #include <compiler.h>
 #include <ccan/short_types/short_types.h>
-
+#include <skiboot.h>
 #define UUID_SIZE 16
 
 typedef struct {

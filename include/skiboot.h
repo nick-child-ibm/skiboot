@@ -34,6 +34,7 @@
 
 struct mem_region;
 extern struct mem_region *mem_region_next(struct mem_region *region);
+#define zalloc(...) calloc(1,__VA_ARGS__)
 
 /* Misc linker script symbols */
 extern char _start[];
@@ -78,7 +79,13 @@ static inline bool is_rodata(const void *p)
 #endif
 
 void _prlog(int log_level, const char* fmt, ...) __attribute__((format (printf, 2, 3)));
-#define prlog(l, f, ...) do { _prlog(l, pr_fmt(f), ##__VA_ARGS__); } while(0)
+#define prlog(l, ...)                                                                              \
+        do {                                                                                       \
+                if (l <= PR_INSANE)                                                                 \
+                        fprintf((l <= PR_ERR) ? stderr : stdout, ##__VA_ARGS__);                   \
+        } while (0)
+
+
 #define prerror(fmt...)	do { prlog(PR_ERR, fmt); } while(0)
 #define prlog_once(arg, ...)	 		\
 ({						\

@@ -13,6 +13,7 @@
 #include <ccan/endian/endian.h>
 #include <mbedtls/error.h>
 #include "libstb/crypto/pkcs7/pkcs7.h"
+#include "skiboot.h"
 #include "edk2.h"
 #include "../secvar.h"
 #include "edk2-compat-process.h"
@@ -109,7 +110,7 @@ static int edk2_compat_process(struct list_head *variable_bank,
 	prlog(PR_INFO, "Setup mode = %d\n", setup_mode);
 
 	/* Check HW-KEY-HASH */
-	if (!setup_mode) {
+/*	if (!setup_mode) {
 		rc = verify_hw_key_hash();
 		if (rc != OPAL_SUCCESS) {
 			prlog(PR_ERR, "Hardware key hash verification mismatch. Keystore and update queue is reset.\n");
@@ -120,7 +121,7 @@ static int edk2_compat_process(struct list_head *variable_bank,
 			goto cleanup;
 		}
 	}
-
+*/
 	/* Return early if we have no updates to process */
 	if (list_empty(update_bank)) {
 		return OPAL_EMPTY;
@@ -202,10 +203,10 @@ static int edk2_compat_process(struct list_head *variable_bank,
 			 */
 			if(neweslsize == 0) {
 				setup_mode = true;
-				delete_hw_key_hash(&staging_bank);
+				//delete_hw_key_hash(&staging_bank);
 			} else  {
 				setup_mode = false;
-				add_hw_key_hash(&staging_bank);
+				//add_hw_key_hash(&staging_bank);
 			}
 			prlog(PR_DEBUG, "setup mode is %d\n", setup_mode);
 		}
@@ -246,23 +247,23 @@ cleanup:
 static int edk2_compat_post_process(struct list_head *variable_bank,
 				    struct list_head *update_bank __unused)
 {
-	struct secvar *hwvar;
-	if (!setup_mode) {
-		secvar_set_secure_mode();
+//	struct secvar *hwvar;
+	//if (!setup_mode) {
+	//	secvar_set_secure_mode();
 		prlog(PR_INFO, "Enforcing OS secure mode\n");
 		/*
 		 * HW KEY HASH is no more needed after this point. It is already
 		 * visible to userspace via device-tree, so exposing via sysfs is
 		 * just a duplication. Remove it from in-memory copy.
 		 */
-		hwvar = find_secvar("HWKH", 5, variable_bank);
-		if (!hwvar) {
-			prlog(PR_ERR, "cannot find hw-key-hash, should not happen\n");
-			return OPAL_INTERNAL_ERROR;
-		}
-		list_del(&hwvar->link);
-		dealloc_secvar(hwvar);
-	}
+//		hwvar = find_secvar("HWKH", 5, variable_bank);
+//		if (!hwvar) {
+//			prlog(PR_ERR, "cannot find hw-key-hash, should not happen\n");
+//			return OPAL_INTERNAL_ERROR;
+//		}
+//		list_del(&hwvar->link);
+//		dealloc_secvar(hwvar);
+//	}
 
 	return OPAL_SUCCESS;
 }
