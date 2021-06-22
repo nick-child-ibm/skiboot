@@ -34,10 +34,28 @@
 #include "mbedtls/x509.h"
 #include "mbedtls/x509_crt.h"
 
+
+/*
+ * PKCS#7 OIDs
+ */
+#define MBEDTLS_OID_PKCS7                               MBEDTLS_OID_PKCS "\x07" /**< pkcs-7 */
+#define MBEDTLS_OID_PKCS7_DATA                          MBEDTLS_OID_PKCS7 "\x01" /**< pbeWithMD2AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 1} */
+#define MBEDTLS_OID_PKCS7_SIGNED_DATA                   MBEDTLS_OID_PKCS7 "\x02" /**< pbeWithMD2AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 1} */
+#define MBEDTLS_OID_PKCS7_ENVELOPED_DATA                MBEDTLS_OID_PKCS7 "\x03" /**< pbeWithMD2AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 1} */
+#define MBEDTLS_OID_PKCS7_SIGNED_AND_ENVELOPED_DATA     MBEDTLS_OID_PKCS7 "\x04" /**< pbeWithMD2AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 1} */
+#define MBEDTLS_OID_PKCS7_DIGESTED_DATA                 MBEDTLS_OID_PKCS7 "\x05" /**< pbeWithMD2AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 1} */
+#define MBEDTLS_OID_PKCS7_ENCRYPTED_DATA                MBEDTLS_OID_PKCS7 "\x06" /**< pbeWithMD2AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 1} */
+
+
 /**
  * \name PKCS7 Error codes
  * \{
  */
+#define prlog(l, ...)  do {                                                                                       \
+                if (l <= 10)                                                                 \
+                        fprintf((l <= PR_ERR) ? stderr : stdout, ##__VA_ARGS__);                   \
+        } while (0)
+
 #define MBEDTLS_ERR_PKCS7_FEATURE_UNAVAILABLE              -0x5300  /**< Unavailable feature, e.g. anything other than signed data. */
 #define MBEDTLS_ERR_PKCS7_INVALID_FORMAT                   -0x53F0  /**< The CRT/CRL format is invalid, e.g. different type expected. */
 #define MBEDTLS_ERR_PKCS7_INVALID_VERSION                  -0x5400  /**< The PKCS7 version element is invalid or cannot be parsed. */
