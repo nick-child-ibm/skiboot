@@ -30,6 +30,7 @@
 #include MBEDTLS_CONFIG_FILE
 #endif
 
+#include "mbedtls/oid.h"
 #include "mbedtls/asn1.h"
 #include "mbedtls/x509.h"
 #include "mbedtls/x509_crt.h"
