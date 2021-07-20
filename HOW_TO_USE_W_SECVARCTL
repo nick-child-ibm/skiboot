@@ -1,0 +1,11 @@
+Hello, 
+the whole point of this branch is to allow secvarctl to call its functions.
+It is important you know that skiboot will not build, this branch is only for testing secvar changes so we don't care that skiboot can't be built. secvarctl and the following information will describe how to build the stuff we need. Yes this is bad and not exactly testing a patch since we won't be able to tell if it can even be built but we trust the poster has built their patches.
+
+I wrote must edits in a haze so I am not sure the actual effect of some of the commits, it might be worth going back through them and trying to get the whole tree to build.  Anyhoo, the secvarctl branch is here 
+https://github.com/nick-child-ibm/secvarctl/tree/test_on_actual_skiboot_tree_also_BE
+
+i recommend building skiboot paritally before building secvarctl by running this:
+make clean && pushd libstb/crypto/mbedtls/ && make -j 30 ||  popd
+
+I am pretty sure secvarctl's Makefile will build edk2-compat-process and whatnotbut it won't build mbedtls so that command makes sure we get that done. 
