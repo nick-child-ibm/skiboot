@@ -19,6 +19,38 @@
 
 struct list_head staging_bank;
 
+static int process_update(const struct secvar *update, char **newesl,
+		   int *new_data_size, struct efi_time *timestamp,
+		   struct list_head *bank, char *last_timestamp)
+{
+	struct secvar *PK = NULL, struct secvar *KEK = NULL;
+	int rc = 0;
+
+
+	PK = find_secvar("PK", 3, bank);
+	KEK = find_secvar("KEK", 4, bank);
+/*
+int update_var_from_auth(
+	const char *var_name,
+	const uint8_t *auth_data, size_t auth_data_size,
+	const struct efi_time *last_timestamp,
+	bool skip_signature_check,
+	const uint8_t *pk_data, size_t pk_data_size,
+	const uint8_t *kek_data, size_t kek_data_size,
+	char **new_var_data, int *new_var_data_size,
+	struct efi_time *new_timestamp)*/
+
+	rc = update_var_from_auth(update->key, update->data, update->data_size,
+								(efi_time *)last_timestamp, setup_mode, 
+								PK ? PK->data : NULL, PK ? PK->data_size : 0 ,
+								KEK ? KEK->data : NULL, KEK ? KEK->data_size : 0,
+								newesl, new_data_size);
+
+out:
+
+	return rc;
+}
+
 /*
  * Initializes supported variables as empty if not loaded from
  * storage. Variables are initialized as volatile if not found.
@@ -240,6 +272,36 @@ cleanup:
 	clear_bank_list(update_bank);
 
 	return rc;
+}
+
+static int update_variable_in_bank(struct secvar *update_var, const char *data,
+			    const uint64_t dsize, struct list_head *bank)
+{
+	struct secvar *var;
+
+	var = find_secvar(update_var->key, update_var->key_len, bank);
+	if (!var)
+		return OPAL_EMPTY;
+
+        /* Reallocate the data memory, if there is change in data size */
+	if (var->data_size < dsize)
+		if (realloc_secvar(var, dsize))
+			return OPAL_NO_MEM;
+
+	if (dsize && data)
+		memcpy(var->data, data, dsize);
+	var->data_size = dsize;
+
+        /* Clear the volatile bit only if updated with positive data size */
+	if (dsize)
+		var->flags &= ~SECVAR_FLAG_VOLATILE;
+	else
+		var->flags |= SECVAR_FLAG_VOLATILE;
+
+	if (key_equals(update_var->key, "PK") || key_equals(update_var->key, "HWKH"))
+		var->flags |= SECVAR_FLAG_PROTECTED;
+
+	return 0;
 }
 
 static int edk2_compat_post_process(struct list_head *variable_bank,
