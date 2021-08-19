@@ -1,0 +1,3 @@
+[submodule "libstb/secvar/backend/libstb-secvar"]
+	path = libstb/secvar/backend/libstb-secvar
+	url = git@github.ibm.com:nick-child/libstb-secvar.git
