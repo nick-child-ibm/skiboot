@@ -18,7 +18,7 @@ else
 endif
 endif
 
-CFLAGS += -Ilibstb/secvar/backend/libstb-secvar/ -Ilibstb/secvar/backend/libstb-secvar/src -Ilibstb/secvar/backend/libstb-secvar/sample
+CFLAGS += -Ilibstb/secvar/backend/libstb-secvar/ -Ilibstb/secvar/backend/libstb-secvar/src -Ilibstb/secvar/backend/libstb-secvar/sample -I./libstb/crypto/pkcs7/
 
 SECVAR_BACKEND_OBJS = edk2-compat.o libstb-secvar/src/edk2-compat-process.o edk2-compat-reset.o libstb-secvar/crypto/$(SECVAR_CRYPTO_OBJS)
 SECVAR_BACKEND = $(SECVAR_BACKEND_DIR)/built-in.a

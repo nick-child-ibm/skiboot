@@ -61,10 +61,13 @@ HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-Wjump-misses-init) \
 	  $(call try-cflag,$(HOSTCC),-Wno-error=suggest-attribute=noreturn)
 HOSTCFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
 
+
+HOSTCFLAGS += -Ilibstb/secvar/backend/libstb-secvar/ -Ilibstb/secvar/backend/libstb-secvar/src -Ilibstb/crypto/pkcs7/
+
 # We want small stack usage for skiboot
 CWARNS += -Wframe-larger-than=1024
 
-HOSTGCOVCFLAGS = -fprofile-arcs -ftest-coverage -lgcov -O0 -g -pg
+HOSTGCOVCFLAGS = -fprofile-arcs -ftest-coverage -lgcov -O0 -g -pg -I./libstb/secvar/backend/libstb-secvar/ -I./ibstb/secvar/backend/libstb-secvar/src -I./libstb/crypto/pkcs7
 
 VALGRIND := valgrind -q --show-reachable=yes --error-exitcode=99
 
@@ -168,7 +171,7 @@ CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
 	  $(call try-cflag,$(CC),-Wno-error=address-of-packed-member)
 
 CFLAGS += $(CWARNS) $(OPTS) $(DBG)
-
+ 
 LDFLAGS := -m64 -static -nostdlib -pie 
 LDFLAGS += -Wl,-pie
 LDFLAGS += -Wl,-Ttext-segment,$(LD_TEXT) -Wl,-N -Wl,--build-id=none
