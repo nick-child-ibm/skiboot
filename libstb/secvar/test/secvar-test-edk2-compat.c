@@ -4,7 +4,7 @@
 #define MBEDTLS_PKCS7_C
 #include "secvar_common_test.c"
 #include "../backend/edk2-compat.c"
-#include "../backend/edk2-compat-process.c"
+#include "../backend/libstb-secvar/src/edk2-compat-process.c"
 #include "../secvar_util.c"
 #include "../../crypto/pkcs7/pkcs7.c"
 #include "../crypto/crypto-mbedtls.c"
@@ -92,6 +92,7 @@ int secvar_set_secure_mode(void) { return 0; };
 int run_test()
 {
 	int rc = -1;
+	int i = 0;
 	struct secvar *tmp;
 	size_t tmp_size;
 	char empty[64] = {0};
@@ -145,7 +146,7 @@ int run_test()
 	ASSERT(2 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(HASH_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	rc = edk2_compat_post_process(&variable_bank, &update_bank);
@@ -164,7 +165,7 @@ int run_test()
 	list_add_tail(&update_bank, &tmp->link);
 	ASSERT(2 == list_length(&update_bank));
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PERMISSION == rc);
+	ASSERT(AUTH_VERIFY_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	rc = edk2_compat_post_process(&variable_bank, &update_bank);
@@ -213,7 +214,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PERMISSION == rc);
+	ASSERT(AUTH_VERIFY_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("db", 3, &variable_bank);
@@ -232,7 +233,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_INTERNAL_ERROR == rc);
+	ASSERT(INTERNAL_ERROR == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("db", 3, &variable_bank);
@@ -251,7 +252,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(ESL_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("KEK", 4, &variable_bank);
@@ -285,7 +286,7 @@ int run_test()
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
 	/* If we don't catch the error, we get OPAL_NO_MEM instead */
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(ESL_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("KEK", 4, &variable_bank);
@@ -300,7 +301,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(PKCS7_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("KEK", 4, &variable_bank);
@@ -329,7 +330,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PERMISSION == rc);
+	ASSERT(AUTH_VERIFY_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("KEK", 4, &variable_bank);
@@ -360,7 +361,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PERMISSION == rc);
+	ASSERT(AUTH_VERIFY_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("db", 3, &variable_bank);
@@ -390,7 +391,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PERMISSION == rc);
+	ASSERT(AUTH_VERIFY_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("KEK", 4, &variable_bank);
@@ -405,7 +406,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(CERT_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("KEK", 4, &variable_bank);
@@ -427,7 +428,7 @@ int run_test()
 	ASSERT(2 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PERMISSION == rc);
+	ASSERT(AUTH_VERIFY_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 
@@ -439,7 +440,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(ESL_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("KEK", 4, &variable_bank);
@@ -499,7 +500,7 @@ int run_test()
 	list_add_tail(&update_bank, &tmp->link);
 	ASSERT(2 == list_length(&update_bank));
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(HASH_FAIL == rc);
 	ASSERT(6 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	rc = edk2_compat_post_process(&variable_bank, &update_bank);
@@ -517,7 +518,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(PKCS7_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 
@@ -550,7 +551,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(INVALID_VAR_NAME == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("PK", 3, &variable_bank);
@@ -566,7 +567,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(HASH_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 
@@ -578,7 +579,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_SUCCESS == rc);
+	printf("TEST %d , rc = %d\n", i++, rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 	tmp = find_secvar("dbx", 4, &variable_bank);
@@ -593,7 +594,7 @@ int run_test()
 	ASSERT(1 == list_length(&update_bank));
 
 	rc = edk2_compat_process(&variable_bank, &update_bank);
-	ASSERT(OPAL_PARAMETER == rc);
+	ASSERT(HASH_FAIL == rc);
 	ASSERT(5 == list_length(&variable_bank));
 	ASSERT(0 == list_length(&update_bank));
 
