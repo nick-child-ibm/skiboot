@@ -2,7 +2,7 @@
 
 .DEFAULT_GOAL := all
 
-override CFLAGS  += -O2 -Wall -I.
+override CFLAGS  += -O2 -Wall -I.  -I../../libstb/secvar/backend/libstb-secvar/ -I../../libstb/secvar/backend/libstb-secvar/src -I../../libstb/secvar/backend/libstb-secvar/sample/
 LIBFLASH_FILES	:= libflash.c libffs.c ecc.c blocklevel.c file.c
 LIBFLASH_OBJS	:= $(addprefix libflash-, $(LIBFLASH_FILES:.c=.o))
 LIBFLASH_SRC	:= $(addprefix libflash/,$(LIBFLASH_FILES))

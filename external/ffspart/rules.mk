@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 .DEFAULT_GOAL := all
 
-override CFLAGS  += -O2 -Wall -g -I.
+override CFLAGS  += -O2 -Wall -g -I.  -I../../libstb/secvar/backend/libstb-secvar/ -I../../libstb/secvar/backend/libstb-secvar/src -I../../libstb/secvar/backend/libstb-secvar/sample/
 EXE     = ffspart
 OBJS    = $(EXE).o version.o
 LIBFLASH_FILES := libflash.c libffs.c ecc.c blocklevel.c file.c

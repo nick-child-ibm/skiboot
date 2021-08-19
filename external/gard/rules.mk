@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 .DEFAULT_GOAL := all
 
-override CFLAGS += -O2 -Wall -Werror -Wno-stringop-truncation -I.
+override CFLAGS += -O2 -Wall -Werror -Wno-stringop-truncation -I. -I../../libstb/secvar/backend/libstb-secvar/ -I../../libstb/secvar/backend/libstb-secvar/src -I../../libstb/secvar/backend/libstb-secvar/sample/
 OBJS      = version.o gard.o units.o
 LIBFLASH_FILES    := libflash.c libffs.c ecc.c blocklevel.c file.c
 LIBFLASH_OBJS     := $(addprefix libflash-, $(LIBFLASH_FILES:.c=.o))
