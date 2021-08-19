@@ -2,6 +2,7 @@
 /* Copyright 2020 IBM Corp. */
 #include <opal.h>
 #include <device.h>
+#include "edk2-compat.h"
 #include "edk2-compat-process.h"
 #include "edk2-compat-reset.h"
 #include "../secvar.h"

@@ -11,21 +11,47 @@
 #include <stdint.h>
 #include <skiboot.h>
 #include <ccan/endian/endian.h>
-#include "libstb/crypto/pkcs7/pkcs7.h"
+#include "../secvar_devtree.h"
 #include "edk2.h"
 #include "../secvar.h"
+#include "edk2-compat.h"
 #include "edk2-compat-process.h"
 #include "edk2-compat-reset.h"
 
 struct list_head staging_bank;
+extern bool setup_mode;
+
+static struct efi_time *get_last_timestamp(const char *key, char *last_timestamp)
+{
+       struct efi_time *timestamp = (struct efi_time*)last_timestamp;
+
+       if (!last_timestamp)
+               return NULL;
+
+       if (key_equals(key, "PK"))
+               return &timestamp[0];
+       else if (key_equals(key, "KEK"))
+               return &timestamp[1];
+       else if (key_equals(key, "db"))
+               return &timestamp[2];
+       else if (key_equals(key, "dbx"))
+               return &timestamp[3];
+       else
+               return NULL;
+}
 
 static int process_update(const struct secvar *update, char **newesl,
 		   int *new_data_size, struct efi_time *timestamp,
 		   struct list_head *bank, char *last_timestamp)
 {
-	struct secvar *PK = NULL, struct secvar *KEK = NULL;
+	struct secvar *PK = NULL, *KEK = NULL;
 	int rc = 0;
+	struct efi_time *prev = NULL;
 
+	// last_timestamp is all TS var data
+	prev = get_last_timestamp(update->key, last_timestamp);
+	if (prev == NULL)
+		return OPAL_INTERNAL_ERROR;
 
 	PK = find_secvar("PK", 3, bank);
 	KEK = find_secvar("KEK", 4, bank);
@@ -41,12 +67,11 @@ int update_var_from_auth(
 	struct efi_time *new_timestamp)*/
 
 	rc = update_var_from_auth(update->key, update->data, update->data_size,
-								(efi_time *)last_timestamp, setup_mode, 
-								PK ? PK->data : NULL, PK ? PK->data_size : 0 ,
-								KEK ? KEK->data : NULL, KEK ? KEK->data_size : 0,
-								newesl, new_data_size);
+					prev, setup_mode, 
+					PK ? PK->data : NULL, PK ? PK->data_size : 0 ,
+					KEK ? KEK->data : NULL, KEK ? KEK->data_size : 0,
+					newesl, new_data_size, timestamp);
 
-out:
 
 	return rc;
 }
@@ -126,6 +151,22 @@ static int edk2_compat_pre_process(struct list_head *variable_bank,
 
 	return OPAL_SUCCESS;
 };
+
+static int update_timestamp(const char *key, const struct efi_time *timestamp, char *last_timestamp)
+{
+       struct efi_time *prev;
+
+       prev = get_last_timestamp(key, last_timestamp);
+       if (prev == NULL)
+               return OPAL_INTERNAL_ERROR;
+
+       /* Update with new timestamp */
+       memcpy(prev, timestamp, sizeof(struct efi_time));
+
+       prlog(PR_DEBUG, "updated prev year is %d month %d day %d\n",
+                       le16_to_cpu(prev->year), prev->month, prev->day);
+       return OPAL_SUCCESS;
+}
 
 static int edk2_compat_process(struct list_head *variable_bank,
 			       struct list_head *update_bank)
@@ -274,7 +315,7 @@ cleanup:
 	return rc;
 }
 
-static int update_variable_in_bank(struct secvar *update_var, const char *data,
+int update_variable_in_bank(struct secvar *update_var, const char *data,
 			    const uint64_t dsize, struct list_head *bank)
 {
 	struct secvar *var;

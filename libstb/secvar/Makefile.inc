@@ -8,6 +8,5 @@ SECVAR = libstb/secvar/built-in.a
 
 include $(SRC)/libstb/secvar/storage/Makefile.inc
 include $(SRC)/libstb/secvar/backend/Makefile.inc
-include $(SRC)/libstb/secvar/crypto/Makefile.inc
 
-$(SECVAR): $(SECVAR_OBJS:%=libstb/secvar/%) $(SECVAR_STORAGE) $(SECVAR_BACKEND) $(SECVAR_CRYPTO)
+$(SECVAR): $(SECVAR_OBJS:%=libstb/secvar/%) $(SECVAR_STORAGE) $(SECVAR_BACKEND)
